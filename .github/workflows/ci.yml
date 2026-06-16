@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Syntax check (server)
+        run: node --check server.mjs
+      - name: Boot smoke test
+        run: |
+          node server.mjs & SERVER_PID=$!
+          sleep 3
+          curl -fsS http://localhost:4000/ > /dev/null && echo "server responded OK"
+          kill $SERVER_PID

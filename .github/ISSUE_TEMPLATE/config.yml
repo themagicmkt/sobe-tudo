@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔐 Security vulnerability
+    url: https://github.com/themagicmkt/sobe-tudo/security/advisories/new
+    about: Please report security issues privately, not as a public issue.
+  - name: 💬 Questions & ideas (Discussions)
+    url: https://github.com/themagicmkt/sobe-tudo/discussions
+    about: Ask questions or share ideas with the community.
