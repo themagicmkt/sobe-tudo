@@ -12,6 +12,10 @@
 
 **Paste your Facebook token + Anthropic (Claude) API key, point at a folder of video creatives, describe your offer — and Sobe Tudo writes the ad copy with AI and builds the whole campaign (CBO campaign → ad set → ads) on the Meta Marketing API.**
 
+<br/>
+
+<img src="docs/dashboard.png" alt="Sobe Tudo dashboard" width="760" />
+
 </div>
 
 > 🇧🇷 *Painel open-source para subir campanhas no Facebook com IA, usando suas próprias chaves. Documentação em inglês para alcançar mais contribuidores — issues/PRs em português são bem-vindos.*
@@ -75,7 +79,7 @@ Local Node/Express server (server.mjs)
 Help wanted on any of these — see [issues](https://github.com/themagicmkt/sobe-tudo/issues):
 
 - [ ] Accounts + auth (multi-tenant, leave localhost)
-- [ ] Recurring billing (Stripe)
+- [ ] *Optional:* one-click hosted version (managed deploy) — self-hosting always stays free & open
 - [ ] Campaign objective picker (traffic / leads / sales)
 - [ ] Built-in creative "uniquifier" (refresh fatigued creatives)
 - [ ] Native folder picker / drag-and-drop uploads
