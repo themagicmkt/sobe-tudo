@@ -36,18 +36,22 @@ Launching a batch of Meta video ads by hand is slow: upload each video, write co
 - 🛟 **Safe by default** — campaigns are created **paused** so you review in Ads Manager before going live.
 - 📜 **Live log** — watch each step stream in real time.
 
-## 🖥️ Quick start
+## 🖥️ Deploy (Vercel)
+
+Built for Vercel — serverless functions + **Vercel Blob** for video uploads (scales to hundreds of videos per campaign).
 
 ```bash
 git clone https://github.com/themagicmkt/sobe-tudo.git
 cd sobe-tudo
 npm install
-npm start
+vercel link          # link/create the project
+vercel blob          # create a Blob store and connect it (sets BLOB_READ_WRITE_TOKEN)
+vercel deploy --prod
 ```
 
-Open **http://localhost:4000**.
+Or import the repo on **vercel.com** and add a **Blob** store under *Storage* (it auto-injects `BLOB_READ_WRITE_TOKEN`). Optional: set `APP_PASSWORD` to gate access.
 
-> Same Wi-Fi? Other devices can reach it at `http://<your-computer-ip>:4000`.
+Local dev: `vercel dev` (after `vercel env pull`).
 
 ## 🔌 What you need
 

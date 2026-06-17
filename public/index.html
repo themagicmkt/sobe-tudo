@@ -27,14 +27,12 @@
   .btn:disabled { opacity:.5; cursor:default; }
   .btn.sec { background:var(--panel2); border:1px solid var(--line); }
   .hint { font-size:12px; color:var(--mut); margin-top:6px; }
-  .files { max-height:160px; overflow:auto; background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:8px 10px; font-size:13px; }
-  .files div { padding:3px 0; color:var(--mut); }
-  #log { background:#05070b; border:1px solid var(--line); border-radius:9px; padding:12px 14px; font-family:ui-monospace,Menlo,monospace; font-size:12.5px; white-space:pre-wrap; max-height:320px; overflow:auto; color:#c7d0de; }
+  .files { max-height:200px; overflow:auto; background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:8px 10px; font-size:13px; }
+  #log { background:#05070b; border:1px solid var(--line); border-radius:9px; padding:12px 14px; font-family:ui-monospace,Menlo,monospace; font-size:12.5px; white-space:pre-wrap; max-height:340px; overflow:auto; color:#c7d0de; }
   a { color:var(--accent2); }
-  /* painel de status */
   .status { display:flex; gap:22px; flex-wrap:wrap; }
   .stitem { display:flex; align-items:center; gap:10px; font-size:14px; }
-  .dot { width:11px; height:11px; border-radius:50%; background:var(--idle); box-shadow:0 0 0 0 rgba(0,0,0,0); }
+  .dot { width:11px; height:11px; border-radius:50%; background:var(--idle); }
   .dot.ok { background:var(--ok); box-shadow:0 0 10px var(--ok); }
   .dot.err { background:var(--err); box-shadow:0 0 10px var(--err); }
   .stitem .sub { color:var(--mut); font-size:12px; }
@@ -60,20 +58,21 @@
         <div class="stitem"><span class="dot" id="dotAi"></span><div><div>IA (Anthropic)</div><div class="sub" id="subAi">não conectado</div></div></div>
       </div>
     </div>
-
     <div class="card">
       <h2>Conectar (faça uma vez)</h2>
       <label>Token do Facebook (System User · ads_management) <a href="#" id="howfb">como pegar?</a></label>
       <input id="fbToken" placeholder="EAAB..." />
       <div class="row3">
-        <div><label>Ad Account ID</label><input id="adAccount" placeholder="act_123456789" /></div>
+        <div><label>Ad Account ID</label><input id="adAccount" placeholder="act_123 ou só o número" /></div>
         <div><label>Page ID</label><input id="pageId" placeholder="1234567890" /></div>
         <div><label>Pixel ID</label><input id="pixelId" placeholder="1234567890" /></div>
       </div>
       <label>API Key da Anthropic (Claude) <a href="https://console.anthropic.com/settings/keys" target="_blank">pegar key</a></label>
       <input id="anthropicKey" placeholder="sk-ant-..." />
+      <label>Senha de acesso (só se o app pedir)</label>
+      <input id="appPass" placeholder="(deixe vazio se não houver)" />
       <button class="btn" id="btnValidate" style="margin-top:16px">Conectar e validar</button>
-      <div class="hint">Suas chaves ficam só neste navegador (localStorage) e no seu computador. Nunca são gravadas no servidor.</div>
+      <div class="hint">Suas chaves ficam só neste navegador (localStorage). Os vídeos vão pro storage temporário e são apagados após o envio à Meta.</div>
       <div id="connLog" class="hint" style="margin-top:10px"></div>
     </div>
   </div>
@@ -81,24 +80,50 @@
   <!-- ABA SUBIR -->
   <div class="view" id="view-subir">
     <div class="banner" id="needConn">⚠️ Conecte suas chaves primeiro na aba <b>Conexões</b>.</div>
-
     <div class="card">
       <h2>1 · Criativos</h2>
-      <label>Pasta dos vídeos (.mp4 / .mov)</label>
-      <input id="folder" placeholder="/Users/voce/Desktop/criativos modificados" />
-      <button class="btn sec" id="btnList" style="margin-top:12px">Listar vídeos</button>
+      <div id="drop" style="border:2px dashed var(--line); border-radius:12px; padding:26px; text-align:center; cursor:pointer; color:var(--mut)">
+        <div style="font-size:30px">📹</div>
+        <div><b style="color:var(--txt)">Clique para escolher os vídeos</b> ou arraste aqui</div>
+        <div class="hint">.mp4 / .mov — pode selecionar vários (até centenas)</div>
+      </div>
+      <input id="videos" type="file" accept="video/mp4,video/quicktime,.mp4,.mov" multiple style="display:none" />
       <div id="files" class="files" style="margin-top:12px; display:none"></div>
     </div>
-
     <div class="card">
       <h2>2 · Campanha</h2>
       <label>Descreva sua oferta / como quer a copy (a IA usa isso)</label>
-      <textarea id="brief" placeholder="Ex: Orações personalizadas do Jesus por áudio, foco em dor financeira. Tom acolhedor, CTA pra ouvir agora."></textarea>
+      <textarea id="brief" placeholder="Ex: Orações personalizadas por áudio, foco em dor financeira. Tom acolhedor."></textarea>
+      <label>Texto principal (opcional — acima do vídeo; se vazio, a IA cria)</label>
+      <textarea id="primaryText" placeholder="Ex: Você não está sozinho. Receba hoje uma oração feita pra você." style="min-height:70px"></textarea>
+      <label>Título do anúncio (opcional — se vazio, a IA cria)</label>
+      <input id="adTitle" placeholder="Ex: Receba sua oração agora" maxlength="40" />
       <div class="row3">
         <div><label>Nome da campanha</label><input id="campaignName" placeholder="Minha Campanha" /></div>
         <div><label>Orçamento/dia (USD)</label><input id="dailyBudget" type="number" value="20" /></div>
-        <div><label>Países (vírgula)</label><input id="countries" value="US" /></div>
+        <div>
+          <label>Países</label>
+          <input id="countryInput" list="countryDL" placeholder="digite: Brasil, EUA..." autocomplete="off" />
+          <datalist id="countryDL"></datalist>
+          <div id="countryChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+          <input id="countries" type="hidden" value="US" />
+        </div>
       </div>
+      <div class="row">
+        <div><label>Estrutura</label>
+          <select id="structure">
+            <option value="one_adset">1-1-X · 1 conjunto, vários criativos juntos</option>
+            <option value="adset_per_creative">1-2-1 · vários conjuntos, 1 anúncio cada</option>
+          </select>
+        </div>
+        <div><label>Orçamento</label>
+          <select id="budgetLevel">
+            <option value="campaign">Na campanha (CBO)</option>
+            <option value="adset">Por conjunto (ABO)</option>
+          </select>
+        </div>
+      </div>
+      <div class="hint" id="budgetHint"></div>
       <div class="row3">
         <div><label>Landing URL</label><input id="landingUrl" placeholder="https://..." /></div>
         <div><label>Botão (CTA)</label>
@@ -108,18 +133,41 @@
           <select id="status"><option value="PAUSED">Pausada (revisar antes)</option><option value="ACTIVE">Ativa</option></select>
         </div>
       </div>
+      <label>Parâmetros de URL / UTMs (opcional)</label>
+      <input id="urlTags" placeholder="utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_content={{ad.name}}" />
+      <div class="hint">Macros do Meta: {{campaign.name}}, {{adset.name}}, {{ad.name}}, {{placement}}.</div>
     </div>
-
     <button class="btn" id="btnUpload">🚀 Subir campanha</button>
-    <div class="card" style="margin-top:18px"><h2>Log</h2><div id="log">Pronto. Liste os criativos e configure a campanha.</div></div>
+    <div class="card" style="margin-top:18px"><h2>Log</h2><div id="log">Escolha os vídeos e configure a campanha.</div></div>
   </div>
-
 </div>
-<script>
+
+<script type="module">
+import { upload } from 'https://esm.sh/@vercel/blob@0.27/client';
+
 const $ = (id) => document.getElementById(id);
-const FIELDS = ['fbToken','adAccount','pageId','pixelId','anthropicKey','folder','brief','campaignName','dailyBudget','countries','landingUrl','cta','status'];
+const FIELDS = ['fbToken','adAccount','pageId','pixelId','anthropicKey','appPass','brief','primaryText','adTitle','campaignName','dailyBudget','countries','structure','budgetLevel','landingUrl','cta','status','urlTags'];
 FIELDS.forEach(f => { const v = localStorage.getItem('st_'+f); if (v!=null && $(f)) $(f).value = v; });
 const save = () => FIELDS.forEach(f => $(f) && localStorage.setItem('st_'+f, $(f).value));
+
+// ---- helpers de rede ----
+const PASS = () => localStorage.getItem('st_appPass') || '';
+async function api(path, body){
+  const r = await fetch(path, { method:'POST', headers:{ 'Content-Type':'application/json', 'x-app-pass': PASS() }, body: JSON.stringify(body||{}) });
+  return r.json();
+}
+async function withRetry(fn, tries=3, delay=2500){
+  let last;
+  for(let i=0;i<tries;i++){ try{ const r=await fn(); if(r && r.ok===false) throw new Error(r.error||'falhou'); return r; }catch(e){ last=e; if(i<tries-1) await new Promise(s=>setTimeout(s,delay)); } }
+  throw last;
+}
+async function pool(items, limit, worker){
+  let i=0;
+  const runners = Array.from({length: Math.min(limit, items.length)}, async () => {
+    while(i < items.length){ const idx=i++; await worker(items[idx], idx); }
+  });
+  await Promise.all(runners);
+}
 
 // ---- tabs ----
 function show(view){
@@ -139,61 +187,137 @@ function paintStatus(){
   $('dotAi').className = 'dot '+(ai?'ok':(localStorage.getItem('st_ai_ok')==='0'?'err':''));
   $('subFb').textContent = fb ? (localStorage.getItem('st_fb_name')||'conectado') : 'não conectado';
   $('subAi').textContent = ai ? 'conectado' : 'não conectado';
-  const badge = $('connBadge'); badge.style.color = isConnected() ? 'var(--ok)' : 'var(--idle)';
+  $('connBadge').style.color = isConnected() ? 'var(--ok)' : 'var(--idle)';
 }
-
 const cl = $('connLog');
-$('howfb').onclick = (e)=>{ e.preventDefault(); cl.innerHTML =
-  '1. developers.facebook.com → criar App (Business) · 2. produto "Marketing API" · 3. System User com acesso à conta de anúncio · 4. token com ads_management, ads_read, business_management · 5. cole acima. Ad Account / Page / Pixel ID ficam no Ads Manager.'; };
-
+$('howfb').onclick = (e)=>{ e.preventDefault(); cl.innerHTML='developers.facebook.com → app Business → Marketing API → System User com ads_management → gere o token. Ad Account / Page / Pixel ID ficam no Ads Manager.'; };
 $('btnValidate').onclick = async () => {
-  save(); cl.textContent = 'Validando...';
-  const r = await fetch('/api/validate',{method:'POST',headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ fbToken:$('fbToken').value, adAccount:$('adAccount').value, anthropicKey:$('anthropicKey').value })});
-  const j = await r.json();
+  save(); cl.textContent='Validando...';
+  const j = await api('/api/validate', { fbToken:$('fbToken').value, adAccount:$('adAccount').value, anthropicKey:$('anthropicKey').value });
   localStorage.setItem('st_fb_ok', j.fb?.ok ? '1':'0');
   localStorage.setItem('st_ai_ok', j.anthropic?.ok ? '1':'0');
   if(j.fb?.ok) localStorage.setItem('st_fb_name', j.fb.name+' ('+j.fb.currency+')');
   paintStatus();
-  let msg = j.fb?.ok ? '✅ Facebook conectado: '+j.fb.name : '❌ Facebook: '+(j.fb?.error||'erro');
-  msg += ' · ' + (j.anthropic?.ok ? '✅ IA conectada' : '❌ IA: '+(j.anthropic?.error||'erro'));
-  cl.textContent = msg;
+  cl.textContent = (j.fb?.ok?'✅ Facebook: '+j.fb.name:'❌ Facebook: '+(j.fb?.error||'erro')) + ' · ' + (j.anthropic?.ok?'✅ IA':'❌ IA: '+(j.anthropic?.error||'erro'));
   if(isConnected()) setTimeout(()=>show('subir'), 700);
 };
 
-// ---- subir ----
-const logEl = $('log');
-const logln = (m)=>{ logEl.textContent += '\n'+m; logEl.scrollTop = logEl.scrollHeight; };
-const logClear = ()=> logEl.textContent='';
+// ---- países ----
+const COUNTRIES = [
+  {n:'Estados Unidos',c:'US'},{n:'Brasil',c:'BR'},{n:'Portugal',c:'PT'},{n:'Reino Unido',c:'GB'},
+  {n:'Canadá',c:'CA'},{n:'Austrália',c:'AU'},{n:'Alemanha',c:'DE'},{n:'França',c:'FR'},
+  {n:'Espanha',c:'ES'},{n:'Itália',c:'IT'},{n:'México',c:'MX'},{n:'Argentina',c:'AR'},
+  {n:'Irlanda',c:'IE'},{n:'Holanda',c:'NL'},{n:'Bélgica',c:'BE'},{n:'Suíça',c:'CH'},
+  {n:'Suécia',c:'SE'},{n:'Noruega',c:'NO'},{n:'Dinamarca',c:'DK'},{n:'Polônia',c:'PL'},
+  {n:'Nova Zelândia',c:'NZ'},{n:'Japão',c:'JP'},{n:'Chile',c:'CL'},{n:'Colômbia',c:'CO'},
+  {n:'Peru',c:'PE'},{n:'Uruguai',c:'UY'},{n:'África do Sul',c:'ZA'},{n:'Emirados Árabes',c:'AE'},
+];
+const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+$('countryDL').innerHTML = COUNTRIES.map(x=>'<option value="'+x.n+'">').join('');
+let selCC = [];
+function renderChips(){
+  $('countryChips').innerHTML = selCC.map(c=>{ const o=COUNTRIES.find(x=>x.c===c); return '<span data-c="'+c+'" style="background:var(--panel2);border:1px solid var(--accent);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer">'+((o?o.n:c)+' ('+c+')')+' ✕</span>'; }).join('');
+  $('countryChips').querySelectorAll('span').forEach(s=> s.onclick=()=>{ selCC=selCC.filter(x=>x!==s.dataset.c); syncCC(); });
+}
+function syncCC(){ $('countries').value=selCC.join(','); save(); renderChips(); }
+function addCountry(raw){
+  raw=(raw||'').trim(); if(!raw) return; let code=null;
+  if(/^[A-Za-z]{2}$/.test(raw)) code=raw.toUpperCase();
+  if(!code){ const o=COUNTRIES.find(x=>norm(x.n)===norm(raw)); if(o)code=o.c; }
+  if(!code){ const o=COUNTRIES.find(x=>norm(x.n).startsWith(norm(raw))); if(o)code=o.c; }
+  if(code && !selCC.includes(code)){ selCC.push(code); syncCC(); }
+  $('countryInput').value='';
+}
+$('countryInput').addEventListener('change', e=> addCountry(e.target.value));
+$('countryInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addCountry(e.target.value); }});
+selCC = ($('countries').value||'US').split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
+renderChips();
 
-$('btnList').onclick = async () => {
-  save(); const r = await fetch('/api/list',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({folder:$('folder').value})});
-  const j = await r.json(); const box=$('files'); box.style.display='block';
-  if(!j.ok){ box.innerHTML='<div>'+j.error+'</div>'; return; }
-  box.innerHTML = '<div style="color:var(--ok)">'+j.files.length+' vídeo(s):</div>' + j.files.map(f=>'<div>· '+f+'</div>').join('');
-};
+// ---- criativos (seleção no navegador) ----
+let selected = [];
+const fmtSize = (b)=> (b/1048576).toFixed(1)+' MB';
+function renderFiles(){
+  updateBudgetHint();
+  const box=$('files');
+  if(!selected.length){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='block';
+  const total=selected.reduce((s,f)=>s+f.size,0);
+  box.innerHTML = '<div style="color:var(--ok);margin-bottom:6px">'+selected.length+' vídeo(s) · '+fmtSize(total)+'</div>' +
+    selected.map((f,i)=>'<div style="display:flex;justify-content:space-between;align-items:center;color:var(--txt);padding:2px 0">· '+f.name+' <span data-i="'+i+'" style="cursor:pointer;color:var(--err);padding:0 6px">✕</span></div>').join('');
+  box.querySelectorAll('span[data-i]').forEach(s=> s.onclick=()=>{ selected.splice(+s.dataset.i,1); renderFiles(); });
+}
+function addFiles(list){
+  for(const f of list){ if(/\.(mp4|mov)$/i.test(f.name)||(f.type||'').startsWith('video/')){ if(!selected.some(x=>x.name===f.name && x.size===f.size)) selected.push(f); } }
+  renderFiles();
+}
+$('drop').onclick = ()=> $('videos').click();
+$('videos').onchange = (e)=> addFiles(e.target.files);
+['dragover','dragenter'].forEach(ev=> $('drop').addEventListener(ev,e=>{e.preventDefault(); $('drop').style.borderColor='var(--accent)';}));
+['dragleave','drop'].forEach(ev=> $('drop').addEventListener(ev,e=>{e.preventDefault(); $('drop').style.borderColor='var(--line)';}));
+$('drop').addEventListener('drop', e=> addFiles(e.dataTransfer.files));
 
+function updateBudgetHint(){
+  const h=$('budgetHint'); if(!h) return;
+  const n=selected.length, bud=Number($('dailyBudget').value||0), struct=$('structure').value, lvl=$('budgetLevel').value;
+  let code,msg;
+  if(struct==='one_adset'){ code=`1-1-${n||'X'}`; msg=`1 conjunto com ${n||'os'} criativo(s). $${bud}/dia ${lvl==='campaign'?'na campanha (CBO)':'no conjunto (ABO)'}.`; }
+  else if(lvl==='adset'){ code=`1-${n||'N'}-1`; msg=`${n||'N'} conjunto(s), 1 criativo cada · $${bud}/dia cada = $${(bud*n).toFixed(0)}/dia total (ABO).`; }
+  else { code=`1-${n||'N'}-1`; msg=`${n||'N'} conjunto(s), 1 criativo cada · $${bud}/dia total na campanha (CBO distribui).`; }
+  h.textContent=`Estrutura ${code}  ·  ${msg}`;
+}
+['structure','budgetLevel','dailyBudget'].forEach(id=>{ const el=$(id); if(el){ el.addEventListener('change',updateBudgetHint); el.addEventListener('input',updateBudgetHint); }});
+
+// ---- log ----
+const logEl=$('log');
+const logln=(m)=>{ logEl.textContent += '\n'+m; logEl.scrollTop=logEl.scrollHeight; };
+const logClear=()=> logEl.textContent='';
+
+// ---- subir (orquestrado: Blob -> campanha -> 1 anúncio por vídeo) ----
 $('btnUpload').onclick = async () => {
   if(!isConnected()){ show('conexoes'); return; }
-  save(); logClear(); $('btnUpload').disabled=true; logln('Iniciando...');
-  const body={}; FIELDS.forEach(f=> body[f]=$(f).value);
+  if(!selected.length){ alert('Escolha pelo menos um vídeo.'); return; }
+  save(); logClear(); $('btnUpload').disabled=true;
+  const cfg={}; FIELDS.forEach(f=> $(f) && (cfg[f]=$(f).value));
   try {
-    const r = await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const reader=r.body.getReader(); const dec=new TextDecoder(); let buf='';
-    while(true){ const {value,done}=await reader.read(); if(done)break; buf+=dec.decode(value,{stream:true});
-      let i; while((i=buf.indexOf('\n'))>=0){ const line=buf.slice(0,i); buf=buf.slice(i+1); if(!line.trim())continue;
-        const o=JSON.parse(line);
-        if(o.type==='log') logln(o.msg);
-        else if(o.type==='done') logln('\n🎉 Pronto! Campanha '+o.campaignId+' — '+o.ads+'/'+o.total+' ads. (Revise no Ads Manager antes de ativar.)');
-        else if(o.type==='error') logln('\n❌ ERRO: '+o.error);
-      }
-    }
+    // 1) Upload pro storage (Blob) — concorrência 4 + retry
+    logln('1/3 · Enviando '+selected.length+' vídeo(s) pro storage...');
+    const uploaded=[]; let up=0;
+    await pool(selected, 4, async (file)=>{
+      try {
+        const b = await withRetry(()=> upload(file.name, file, { access:'public', handleUploadUrl:'/api/blob-upload', clientPayload: PASS() }), 3, 3000);
+        uploaded.push({ url:b.url, name:file.name }); up++;
+        logln('   ✔ '+file.name+'  ('+up+'/'+selected.length+')');
+      } catch(e){ logln('   ✖ upload falhou: '+file.name+' — '+e.message); }
+    });
+    if(!uploaded.length) throw new Error('Nenhum vídeo subiu pro storage.');
+
+    // 2) Campanha (+ conjunto base se 1-1-X)
+    logln('2/3 · Criando campanha...');
+    const camp = await api('/api/create-campaign', cfg);
+    if(!camp.ok) throw new Error(camp.error);
+    logln('   Campanha '+camp.campaignId+' · '+(camp.structure==='one_adset'?'1 conjunto':'1 conjunto por criativo'));
+
+    // 3) 1 anúncio por vídeo — concorrência 3, retry, falhas isoladas
+    logln('3/3 · Criando anúncios ('+uploaded.length+')...');
+    let done=0, fail=0;
+    await pool(uploaded, 3, async (v)=>{
+      try {
+        const ing = await withRetry(()=> api('/api/ingest-video', { fbToken:cfg.fbToken, adAccount:cfg.adAccount, blobUrl:v.url, name:v.name }));
+        let ready=false;
+        for(let k=0;k<75;k++){ const st=await api('/api/video-status',{ fbToken:cfg.fbToken, videoId:ing.videoId }); if(st.status==='ready'){ready=true;break;} if(st.status==='error') throw new Error('processamento falhou'); await new Promise(s=>setTimeout(s,4000)); }
+        if(!ready) throw new Error('timeout no processamento');
+        const ad = await withRetry(()=> api('/api/create-ad', { ...cfg, video:{name:v.name}, blobUrl:v.url, videoId:ing.videoId, campaignId:camp.campaignId, adsetId:camp.adsetId }));
+        done++; logln('   ✅ '+v.name+'  ('+done+'/'+uploaded.length+')'+(ad.headline?' — "'+ad.headline+'"':''));
+      } catch(e){ fail++; logln('   ❌ '+v.name+' — '+e.message); }
+    });
+    logln('\n🎉 Concluído: '+done+' anúncio(s), '+fail+' falha(s). Campanha '+camp.campaignId+' — revise no Ads Manager antes de ativar.');
   } catch(e){ logln('❌ '+e.message); }
   $('btnUpload').disabled=false;
 };
 
 // ---- init ----
 paintStatus();
+updateBudgetHint();
 show(isConnected() ? 'subir' : 'conexoes');
 </script>
 </body>

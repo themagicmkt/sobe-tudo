@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Dashboard para subir campanhas no Facebook com IA (chaves do proprio usuario).",
+  "description": "Dashboard para subir campanhas no Facebook com IA (chaves do proprio usuario). Deploy na Vercel.",
   "scripts": {
-    "start": "node server.mjs"
+    "dev": "vercel dev",
+    "start": "vercel dev"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
-    "express": "^4.21.2"
+    "@vercel/blob": "^0.27.0"
   }
 }
