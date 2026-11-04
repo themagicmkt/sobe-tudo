@@ -1,8 +1,10 @@
 // Cria a campanha (1x). Se estrutura = 1 conjunto (1-1-X), cria tambem o conjunto base.
 // Retorna ids pro navegador usar nas chamadas de create-ad.
 import { fbPost, normAcct, parseCountries, adsetBody, checkPass } from '../lib/meta.js';
+import { BillingError, requireCampaignAccess } from '../lib/billing.js';
 
-export default async function handler(req, res) {
+export function createCampaignHandler(checkAccess = requireCampaignAccess) {
+return async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   if (!checkPass(req)) return res.status(401).json({ error: 'senha incorreta' });
   try {
@@ -16,6 +18,7 @@ export default async function handler(req, res) {
     const countries = parseCountries(b.countries);
     const name = `${b.campaignName || 'Sobe Tudo'} — ${new Date().toISOString().slice(0, 10)}`;
 
+    await checkAccess({ fbToken, adAccount });
     const campaign = await fbPost(fbToken, `${adAccount}/campaigns`, {
       name, objective: 'OUTCOME_SALES', status, special_ad_categories: [],
       ...(cbo ? { daily_budget: dailyBudget, bid_strategy: 'LOWEST_COST_WITHOUT_CAP' } : {}),
@@ -31,6 +34,10 @@ export default async function handler(req, res) {
     }
     res.json({ ok: true, campaignId: campaign.id, adsetId, structure, cbo });
   } catch (e) {
+    if (e instanceof BillingError) return res.status(e.status).json({ ok: false, error: e.message, code: e.code });
     res.json({ ok: false, error: e.message });
   }
 }
+}
+
+export default createCampaignHandler();
