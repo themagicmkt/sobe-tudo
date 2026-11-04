@@ -110,3 +110,26 @@ You are responsible for complying with the [Meta Platform Terms](https://www.fac
 ---
 
 > 🤖 For AI coding assistants: read [`CLAUDE.md`](CLAUDE.md) for full project context.
+
+## Optional hosted campaign access (Longplay pilot)
+
+For the recurring-plan direction in #8, the operator may gate **campaign creation**
+by an existing Longplay access Feature. This is off by default; local BYOK behaviour
+and the existing optional app password remain unchanged. Set server-side Vercel variables:
+`LONGPLAY_CAMPAIGN_FEATURE_ID`, `LONGPLAY_BASE_URL` (explicit HTTPS API origin),
+`LONGPLAY_SECRET_KEY`, `LONGPLAY_APP_ID`, and `LONGPLAY_ENVIRONMENT` (`sandbox` or `live`).
+
+The handler first proves access to the selected Meta ad account through the user's
+Meta token, then checks the Customer external ID `sobetudo:adaccount:act_<accountId>`.
+Only that verified ad-account identifier and the Feature go to Longplay; Meta tokens,
+Anthropic keys, videos and ad copy stay outside billing. Denied access returns 402;
+a billing outage returns 503 before any campaign/adset mutation. Existing free
+installations make neither the added Meta preflight nor billing requests.
+
+This slice is account-scoped access, not app login, recurring checkout, usage charging
+or a replacement for Stripe. The operator must configure approved plans and their
+purchase/management flow before enabling it. Only access Features are supported;
+a metered balance check cannot prevent concurrent overspending. Other endpoints
+remain unchanged; this is not an enforcement claim for every API in a hosted product.
+
+Offline tests: `node --test test/billing.test.js`.
